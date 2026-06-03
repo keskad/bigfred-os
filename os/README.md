@@ -32,7 +32,7 @@ make image
 ### Błąd `host-m4` / `gl_oset.h` (GCC 15)
 
 Na hoście z **GCC 15** (np. Arch/Manjaro 2025) build `m4-1.4.19` pada na `_GL_ATTRIBUTE_NODISCARD`.
-Repozytorium nadpisuje pakiet w `os/package/m4/` (`-std=gnu17`). Po aktualizacji wyczyść:
+Obejście w `os/external.mk` (`HOST_M4_CONF_ENV`, `-std=gnu17`). Po aktualizacji wyczyść:
 
 ```bash
 rm -rf os/output/build/host-m4-*
