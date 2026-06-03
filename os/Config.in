@@ -1,0 +1,5 @@
+menu "BigFred hub"
+
+source "$BR2_EXTERNAL_BIGFRED_HUB_PATH/package/Config.in"
+
+endmenu

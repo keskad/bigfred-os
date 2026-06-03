@@ -1,0 +1,8 @@
+CONFIG_FEATURE_CROND_D=y
+CONFIG_CROND=y
+CONFIG_FEATURE_CROND_DIR="/etc/crontabs"
+
+# ps(1) for diagnostics (taskset checks, init debugging)
+CONFIG_PS=y
+CONFIG_FEATURE_PS_LONG=y
+CONFIG_FEATURE_PS_WIDE=y

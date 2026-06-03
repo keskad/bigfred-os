@@ -1,0 +1,20 @@
+# Hub OS kernel options — see docs/loconet-adapter/08-hub-os-image.md §8.6
+# PREEMPT_RT: requires a kernel tree/branch with RT support on bcm2712.
+# If the build fails on CONFIG_PREEMPT_RT, use an RT-enabled raspberrypi/linux
+# revision or drop this line until RT patches are available for your kernel tag.
+
+CONFIG_PREEMPT_RT=y
+CONFIG_HIGH_RES_TIMERS=y
+CONFIG_HZ_1000=y
+
+CONFIG_WATCHDOG=y
+CONFIG_WATCHDOG_CORE=y
+CONFIG_BCM2835_WDT=y
+
+# USB serial (Uhlenbrock 63120 on DR5000 layouts)
+CONFIG_USB_ACM=y
+CONFIG_USB_SERIAL=y
+CONFIG_USB_SERIAL_GENERIC=y
+
+# ext4 for RO root and RW /data
+CONFIG_EXT4_FS=y

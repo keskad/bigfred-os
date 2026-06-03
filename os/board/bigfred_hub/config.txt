@@ -1,0 +1,18 @@
+# Raspberry Pi 5 — boot firmware (derived from Buildroot board/raspberrypi5/config_5.txt)
+# Hub: NVMe boot via M.2 HAT+ when firmware supports it.
+
+start_file=start4.elf
+fixup_file=fixup4.dat
+kernel=Image
+
+# Pi 5: enable PCIe Gen3 for NVMe HAT+
+dtparam=pciex1_gen=3
+
+# Active cooler (fanctl manages policy in userspace)
+dtparam=cooling_fan=on
+
+# UART: serial console on Pi 5 debug UART (ttyAMA10)
+enable_uart=1
+
+# 64-bit only
+arm_64bit=1

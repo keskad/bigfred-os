@@ -1,0 +1,35 @@
+#!/bin/sh
+# Mount fstab entries; ensure /data exists; keep / read-only
+
+case "$1" in
+start)
+	# Root may already be mounted ro via kernel cmdline
+	mount -a 2>/dev/null || true
+
+	if ! grep -q ' /data ' /proc/mounts; then
+		if [ -b /dev/nvme0n1p3 ]; then
+			if ! blkid /dev/nvme0n1p3 >/dev/null 2>&1; then
+				mkfs.ext4 -L bigfred-data /dev/nvme0n1p3
+			fi
+			mount /dev/nvme0n1p3 /data
+		fi
+	fi
+
+	mkdir -p /data/sqlite /data/redis /data/alloy \
+		/data/logs/bigfred /data/logs/redis /data/logs/alloy
+
+	# Enforce read-only root (hub spec)
+	mount -o remount,ro / 2>/dev/null || true
+	;;
+stop)
+	umount /data 2>/dev/null || true
+	;;
+restart)
+	$0 stop
+	$0 start
+	;;
+*)
+	echo "Usage: $0 {start|stop|restart}"
+	exit 1
+	;;
+esac

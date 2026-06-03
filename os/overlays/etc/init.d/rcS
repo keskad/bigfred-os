@@ -1,0 +1,18 @@
+#!/bin/sh
+# Run all S??* boot scripts (BusyBox SysV style)
+
+for i in /etc/init.d/S??*; do
+	[ -x "$i" ] || continue
+	case "$i" in
+	*.sh)
+		(
+			trap - INT QUIT TSTP
+			set start
+			. "$i"
+		)
+		;;
+	*)
+		"$i" start
+		;;
+	esac
+done

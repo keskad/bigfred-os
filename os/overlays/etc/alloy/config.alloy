@@ -1,0 +1,6 @@
+// Placeholder — replace with your Grafana Alloy river config.
+// State directory: /data/alloy
+
+logging {
+  level = "info"
+}

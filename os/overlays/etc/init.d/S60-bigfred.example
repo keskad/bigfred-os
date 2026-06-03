@@ -1,0 +1,13 @@
+#!/bin/sh
+# Example only — enable after installing BigFred binaries.
+# Rename to S60-bigfred when loco-server and dcc-bus are on the image.
+#
+# taskset -c 2,3 /usr/bin/loco-server … &
+# taskset -c 2,3 /usr/bin/dcc-bus … &
+
+case "$1" in
+start)
+	echo "S60-bigfred: install BigFred and rename this script to S60-bigfred"
+	;;
+stop) ;;
+esac

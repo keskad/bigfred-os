@@ -1,0 +1,3 @@
+# Hub log rotation (§8.9)
+0  3  *   *   *     /usr/sbin/rotate-hub-logs
+15 3  *   *   *     /usr/sbin/rotate-hub-logs

@@ -1,0 +1,37 @@
+#!/bin/sh
+# Static IP by default; optional DHCP via /etc/bigfred/network.conf
+
+CONF=/etc/bigfred/network.conf
+
+case "$1" in
+start)
+	. "$CONF" 2>/dev/null || true
+	IFACE="${HUB_IFACE:-eth0}"
+	ip link set "$IFACE" up
+
+	if [ "${HUB_USE_DHCP:-0}" = "1" ]; then
+		dhclient "$IFACE"
+	else
+		IP="${HUB_IP:-192.168.10.10}"
+		PFX="${HUB_PREFIX:-24}"
+		GW="${HUB_GW:-192.168.10.1}"
+		ip addr flush dev "$IFACE"
+		ip addr add "${IP}/${PFX}" dev "$IFACE"
+		ip route add default via "$GW" 2>/dev/null || true
+	fi
+	;;
+stop)
+	. "$CONF" 2>/dev/null || true
+	IFACE="${HUB_IFACE:-eth0}"
+	killall dhclient 2>/dev/null
+	ip addr flush dev "$IFACE" 2>/dev/null
+	;;
+restart)
+	$0 stop
+	$0 start
+	;;
+*)
+	echo "Usage: $0 {start|stop|restart}"
+	exit 1
+	;;
+esac

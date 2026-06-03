@@ -1,0 +1,113 @@
+# BigFred hub OS (Buildroot)
+
+Obraz referencyjny dla **Raspberry Pi 5** opisany w dokumentacji
+`modelarstwo/rb/docs/loconet-adapter` (rozdział **§8 Hub OS image**).
+
+Ten katalog to drzewo **BR2_EXTERNAL** — nie zawiera binariów **BigFred**
+(`loco-server`, `dcc-bus`, `web/dist`). Zainstalujesz je osobno (np. na
+partycji `/` w trybie RW lub przez własny pakiet Buildroot).
+
+## Co zawiera obraz
+
+| Warstwa | Opis |
+|---------|------|
+| **Bootloader / firmware** | `rpi-firmware`, `config.txt`, `cmdline.txt` (isolcpus, NVMe root) |
+| **Jądro** | Raspberry Pi `linux` 6.6 (`bcm2712`) + fragmenty RT i USB-ACM |
+| **Rootfs** | BusyBox init, musl, RO `/`, RW `/data` |
+| **Usługi** | Redis, SQLite, Dropbear, watchdog, fanctl, opcjonalnie Alloy |
+| **Init** | `S05`…`S95` zgodnie z §8.3 (bez `S60-bigfred`) |
+
+## Wymagania hosta
+
+Zależności jak w [manualu Buildroot](https://buildroot.org/downloads/manual/manual.html#requirement)
+(m.in. `gcc`, `make`, `ncurses`, `python3`, `rsync`, `wget`, `bc`).
+
+## Budowa
+
+```bash
+cd os
+make image
+```
+
+### Błąd `host-m4` / `gl_oset.h` (GCC 15)
+
+Na hoście z **GCC 15** (np. Arch/Manjaro 2025) build `m4-1.4.19` pada na `_GL_ATTRIBUTE_NODISCARD`.
+Repozytorium nadpisuje pakiet w `os/package/m4/` (`-std=gnu17`). Po aktualizacji wyczyść:
+
+```bash
+rm -rf os/output/build/host-m4-*
+make -C os image
+```
+
+### GitHub Actions (ręcznie)
+
+Workflow **Build hub OS image** (`/.github/workflows/build-hub-os.yml`):
+
+1. Repozytorium → **Actions** → **Build hub OS image** → **Run workflow**
+2. Opcje: *clean* (pełny rebuild), *skip_tests*
+3. Po zakończeniu (~1–3 h): artefakt `bigfred-hub-nvme-<run>` z `hub-nvme.img` i sumą SHA-256
+
+Lokalny flash: `sudo ./scripts/flash-nvme.sh /dev/nvme0n1 output/images/hub-nvme.img`
+
+Pierwsze uruchomienie pobierze Buildroot `2024.11` i zbuduje obraz (długo,
+zależnie od CPU i cache).
+
+Wynik:
+
+```text
+output/images/hub-nvme.img
+output/images/sdcard.img   # symlink
+```
+
+## Flash na NVMe
+
+```bash
+sudo ./scripts/flash-nvme.sh /dev/nvme0n1 output/images/hub-nvme.img
+```
+
+## Konfiguracja przed wdrożeniem
+
+1. **Sieć** — `board/bigfred_hub/network.conf` (kopiowany do `/etc/bigfred/network.conf`).
+2. **Hasło root** — domyślnie `bigfred` w defconfig; zmień przez `make menuconfig`
+   → *System configuration* → *Root password*.
+3. **Uhlenbrock 63120** — uzupełnij `overlays/etc/udev/rules.d/99-uhlenbrock-63120.rules`
+   po `udevadm` (§3.5).
+4. **PREEMPT_RT** — fragment `configs/linux-hub.fragment`; jeśli kompilacja jądra
+   się wyłoży, użyj tagu/branży `raspberrypi/linux` z RT lub tymczasowo usuń
+   `CONFIG_PREEMPT_RT=y`.
+5. **Grafana Alloy** — `make menuconfig` → włącz `BR2_PACKAGE_ALLOY` i umieść
+   binarkę `package/alloy/alloy-linux-arm64`.
+
+## Instalacja BigFred (poza tym repo)
+
+Po flashu, z innego builda Go (`GOOS=linux GOARCH=arm64`):
+
+- `/usr/bin/loco-server`, `/usr/bin/dcc-bus`
+- `/usr/share/bigfred/web`
+- skrypt init `S60-bigfred` (wzorzec w dokumentacji §8.3) z `taskset -c 2,3`
+
+Bazy: `/data/sqlite/`, Redis: `/data/redis/`.
+
+## Struktura
+
+```text
+os/
+├── configs/           # defconfig, fragmenty jądra i BusyBox
+├── board/bigfred_hub/ # cmdline, config.txt, genimage, post-*.sh
+├── overlays/          # fstab, init.d, redis, crontab, udev
+├── kernel/            # (fragmenty w configs/linux-hub.fragment)
+├── package/           # opcjonalnie alloy (Go apps: ../apps/)
+├── scripts/           # flash-nvme.sh
+../apps/                 # Go apps → apps/.bin/ → /usr/sbin/ on image
+├── Makefile
+└── external.desc
+```
+
+## Dostosowanie
+
+```bash
+make menuconfig    # pakiety Buildroot
+make image
+```
+
+Defconfig projektu: `configs/bigfred_hub_rpi5_defconfig`.
