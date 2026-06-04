@@ -1,7 +1,7 @@
 # BigFred hub OS — Buildroot wrapper
 # Requires: host packages per https://buildroot.org/downloads/manual/manual.html#requirement
 
-BUILDROOT_VERSION ?= 2024.11
+BUILDROOT_VERSION ?= 2025.02
 BUILDROOT_URL       = https://github.com/buildroot/buildroot/archive/$(BUILDROOT_VERSION).tar.gz
 
 CURDIR            := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))

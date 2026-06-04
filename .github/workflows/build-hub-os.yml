@@ -42,42 +42,16 @@ jobs:
           cache: true
 
       - name: Install Buildroot host dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            build-essential \
-            sed \
-            make \
-            binutils \
-            gcc \
-            g++ \
-            bash \
-            patch \
-            gzip \
-            bzip2 \
-            perl \
-            tar \
-            cpio \
-            python3 \
-            unzip \
-            rsync \
-            wget \
-            curl \
-            file \
-            bc \
-            ca-certificates \
-            libncurses-dev \
-            libssl-dev \
-            debianutils
+        run: sudo bash docker/install-buildroot-deps.sh
 
       - name: Cache Buildroot downloads
         uses: actions/cache@v4
         id: cache-dl
         with:
-          path: os/output/dl
-          key: br-dl-${{ runner.os }}-2024.11-${{ hashFiles('os/configs/**', 'os/overlays/**', 'os/board/**', 'apps/**') }}
+          path: os/buildroot/dl
+          key: br-dl-${{ runner.os }}-2025.02-${{ hashFiles('os/configs/**', 'os/overlays/**', 'os/board/**', 'apps/**') }}
           restore-keys: |
-            br-dl-${{ runner.os }}-2024.11-
+            br-dl-${{ runner.os }}-2025.02-
 
       - name: Cache Buildroot source tree
         uses: actions/cache@v4
@@ -85,14 +59,29 @@ jobs:
         with:
           path: |
             os/buildroot
-            os/buildroot-2024.11.tar.gz
-          key: br-src-${{ runner.os }}-2024.11
+            os/buildroot-2025.02.tar.gz
+          key: br-src-${{ runner.os }}-2025.02
           restore-keys: |
             br-src-${{ runner.os }}-
 
+      - name: Cache host toolchain
+        uses: actions/cache@v4
+        id: cache-toolchain
+        with:
+          path: os/.cache/host-toolchain
+          key: br-host-toolchain-${{ runner.os }}-2025.02-gcc13-${{ hashFiles('os/configs/bigfred_hub_rpi5_defconfig', 'os/configs/linux-4k-page-size.fragment', 'os/external.mk') }}
+          restore-keys: |
+            br-host-toolchain-${{ runner.os }}-2025.02-gcc13-
+
       - name: Clean build directories
         if: inputs.clean
-        run: make -C os distclean
+        run: |
+          rm -rf os/.cache/host-toolchain
+          make -C os distclean
+
+      - name: Restore host toolchain from cache
+        if: inputs.clean != true
+        run: bash scripts/ci-toolchain-cache.sh restore
 
       - name: Test hub apps
         if: inputs.skip_tests != true
@@ -100,6 +89,10 @@ jobs:
 
       - name: Build hub OS image
         run: make -C os image
+
+      - name: Save host toolchain to cache
+        if: success()
+        run: bash scripts/ci-toolchain-cache.sh save
 
       - name: Image summary
         run: |

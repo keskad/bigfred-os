@@ -1,9 +1,6 @@
 # Hub OS kernel options — see docs/loconet-adapter/08-hub-os-image.md §8.6
-# PREEMPT_RT: requires a kernel tree/branch with RT support on bcm2712.
-# If the build fails on CONFIG_PREEMPT_RT, use an RT-enabled raspberrypi/linux
-# revision or drop this line until RT patches are available for your kernel tag.
-
-CONFIG_PREEMPT_RT=y
+# CONFIG_PREEMPT_RT needs an RT-patched raspberrypi/linux tree; use PREEMPT for now.
+CONFIG_PREEMPT=y
 CONFIG_HIGH_RES_TIMERS=y
 CONFIG_HZ_1000=y
 

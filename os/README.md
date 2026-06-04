@@ -24,24 +24,40 @@ Zależności jak w [manualu Buildroot](https://buildroot.org/downloads/manual/ma
 
 ## Budowa
 
+Z katalogu głównego repozytorium (zalecane):
+
+```bash
+make image                  # host (wymaga zależności Buildroot)
+make image-using-docker     # Ubuntu 24.04 w Dockerze (uid/gid 1000:1000)
+```
+
+Albo tylko warstwa OS:
+
 ```bash
 cd os
 make image
 ```
 
-### Błąd `host-m4` / `gl_oset.h` (GCC 15)
+Zależności hosta (Ubuntu/Debian): `sudo docker/install-buildroot-deps.sh`
 
-Na hoście z **GCC 15** (np. Arch/Manjaro 2025) build `m4-1.4.19` pada na `_GL_ATTRIBUTE_NODISCARD`.
-Obejście w `os/external.mk` (`HOST_M4_CONF_ENV`, `-std=gnu17`). Po aktualizacji wyczyść:
+### Błędy hosta przy GCC 15 (Manjaro/Arch)
+
+GCC 15 domyślnie używa `-std=gnu23`; starsze host-pakiety mogą paść (`host-m4`,
+`host-e2fsprogs`, …). Używamy Buildroot **2025.02** oraz obejść C-only w
+`os/external.mk` (nie globalnego `HOST_CFLAGS` — psuje `host-gcc`). Po zmianie wyczyść:
 
 ```bash
-rm -rf os/output/build/host-m4-*
+rm -rf os/output/build/host-m4-* os/output/build/host-e2fsprogs-*
 make -C os image
 ```
 
 ### GitHub Actions (ręcznie)
 
-Workflow **Build hub OS image** (`/.github/workflows/build-hub-os.yml`):
+Workflow **Build hub OS image** (`/.github/workflows/build-hub-os.yml`) cache’uje m.in.
+pobrania (`os/buildroot/dl`), drzewo Buildroot oraz **host toolchain**
+(`os/.cache/host-toolchain` — `host-gcc`, musl, `output/host`). Przy opcji *clean*
+cache toolchaina jest czyszczony.
+
 
 1. Repozytorium → **Actions** → **Build hub OS image** → **Run workflow**
 2. Opcje: *clean* (pełny rebuild), *skip_tests*
